@@ -32,6 +32,9 @@
 #
 # INPUT_MAIL_FILTER(`cmilter', `S=local:/var/tmp/cmilter, F=T, T=S:4m;R:4m')dnl
 
+# The latest development version is available
+#	from https://github.com/nigelhorne/cmilter
+
 # Version 1.0 9/8/12: First release
 # Version 1.1 10/8/12:
 #	Added resilience for connection to IANA
