@@ -45,6 +45,8 @@
 # Version 1.3
 #	Use ftok($0) as the key for the shared memory area
 
+# TODO: Use Proc::Daemon to daemonize ourself
+
 use strict;
 use diagnostics;
 use warnings;
