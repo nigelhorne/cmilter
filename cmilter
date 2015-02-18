@@ -111,6 +111,8 @@ $cbs{'connect'} = sub {
 			$ctx->setreply(554, "5.7.1", "$ip isn't a valid IPv4 address");
 			return SMFIS_REJECT;
 		}
+	} elsif($hostname eq 'localhost') {
+		return SMFIS_ACCEPT;
 	} else {
 		my $query = $resolver->search($hostname);
 
