@@ -138,7 +138,7 @@ $cbs{'connect'} = sub {
 	}
 
 	if(is_private_ipv4($ip) || is_loopback_ipv4($ip)) {
-		return SMFIS_CONTINUE;
+		return SMFIS_ACCEPT;
 	}
 
 	my $country = $gi->country_code_by_addr($ip);
