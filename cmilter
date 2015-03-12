@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-#  Copyright (C) 2012 Nigel Horne <njh@bandsman.co.uk>
+#  Copyright (C) 2012-2015 Nigel Horne <njh@bandsman.co.uk>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -75,10 +75,12 @@ my %blacklist = (
 	'SA' => 1,
 	'CY' => 1,
 	'CO' => 1,
+	'KR' => 1,
 	'MX' => 1,
 	'IN' => 1,
 	'RS' => 1,
 	'PK' => 1,
+	'TW' => 1,
 );
 
 my $milter = Sendmail::PMilter->new();
