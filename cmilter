@@ -25,6 +25,7 @@
 #	modify the blacklist hash table
 #	apt-get install libgeoip-dev
 #	choose your caching algorithm (look for $cache = in this code)
+#	Install CPAN Geo::IP
 #
 # To install, simply put this script into /usr/local/etc/clmilter
 
@@ -112,6 +113,8 @@ $cbs{'connect'} = sub {
 			$ctx->setreply(554, "5.7.1", "$ip isn't a valid IPv4 address");
 			return SMFIS_REJECT;
 		}
+	} elsif($hostname eq 'localhost') {
+		return SMFIS_ACCEPT;
 	} else {
 		my $query = $resolver->search($hostname);
 
@@ -137,7 +140,7 @@ $cbs{'connect'} = sub {
 	}
 
 	if(is_private_ipv4($ip) || is_loopback_ipv4($ip)) {
-		return SMFIS_CONTINUE;
+		return SMFIS_ACCEPT;
 	}
 
 	my $country = $gi->country_code_by_addr($ip);
