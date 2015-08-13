@@ -9,5 +9,6 @@ perl:
   - "5.14"
 install:
   - cpanm --quiet --installdeps --notest Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV
+  - cpanm --quiet --notest Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV
 script:
   - perl -c cmilter
