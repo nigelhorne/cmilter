@@ -12,10 +12,8 @@ Before installing:
 
 To install, simply put this script into /usr/local/etc/clmilter
 
-If you are using systemd, run
-    systemctl edit cmilter.service
-
-Then copy and paste this content:
+If you are usin systemd, copy and paste this content into
+/etc/systemd/system/cmilter.service
     [Unit]
     Description=Block e-mail by country
     After=network.target
@@ -27,10 +25,11 @@ Then copy and paste this content:
     
     [Install]
     WantedBy=multi-user.target
-    Alias=cmilter.service
 
 Then run
+    systemctl daemon-reload
     systemctl enable cmilter.service
+    systemctl start cmilter.service
 
 If you are not using systemd, put these into /etc/rc.local:
     rm -f /var/tmp/cmilter
