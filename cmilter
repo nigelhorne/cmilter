@@ -21,20 +21,6 @@
 # connections from remote sites in countries that we know we won't get e-mails
 # from.
 #
-# Before installing:
-#	modify the blacklist hash table
-#	apt-get install libgeoip-dev
-#	choose your caching algorithm (look for $cache = in this code)
-#	Install CPAN Geo::IP
-#
-# To install, simply put this script into /usr/local/etc/clmilter
-
-# To run add this to /etc/rc.local:
-#	rm -f /var/tmp/cmilter
-#	/usr/local/etc/cmilter local:/var/tmp/cmilter
-#
-# INPUT_MAIL_FILTER(`cmilter', `S=local:/var/tmp/cmilter, F=T, T=S:4m;R:4m')dnl
-
 # The latest development version is available
 #	from https://github.com/nigelhorne/cmilter
 
