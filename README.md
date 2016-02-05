@@ -5,14 +5,15 @@ A milter to prevent e-mails from countries from which you don't wish to receive
 e-mails.
 
 Before installing:
-    modify the blacklist hash table
+    modify the blacklist hash table in the source code
     apt-get install libgeoip-dev
-    choose your caching algorithm (look for $cache = in this code)
-    Install CPAN Geo::IP
+    choose your caching algorithm (look for $cache = in the source code)
+    Install CHI, Net::Whois::IANA, Net::Whois::IP, Data::Validate::IP, Geo::IP
+        and Sendmail::PMilter from CPAN
 
 To install, simply put this script into /usr/local/etc/clmilter
 
-If you are usin systemd, copy and paste this content into
+If you are using systemd, copy and paste this content into
 /etc/systemd/system/cmilter.service
     [Unit]
     Description=Block e-mail by country
@@ -40,4 +41,3 @@ Finally put this into /etc/mail/sendmail.mc:
 
 And run
     service sendmail restart
-
