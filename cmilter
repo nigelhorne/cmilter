@@ -165,13 +165,13 @@ $cbs{'connect'} = sub {
 
 	if($country) {
 		$country = uc($country);
-		print "$ip: $country\n";
 		if(exists($blacklist{$country})) {
 			$country = code2country($country);
 			warn("We don't accept emails from $country");
 			$ctx->setreply(554, "5.7.1", "We don't accept emails from $country");
 			return SMFIS_REJECT;
 		}
+		print "$ip: $country\n";
 	} else {
 		warn("Can't determine the country for IP $ip");
 		# Should tempfail with 220 in connect(), however
