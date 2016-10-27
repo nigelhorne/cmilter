@@ -16,7 +16,7 @@ perl:
   - "5.12"
 
 install:
-  - cpanm --skip-satisfied --quiet --notest Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV B::Lint IPC::System::Simple warnings::unused
+  - cpanm --skip-satisfied --quiet --notest Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV B::Lint IPC::System::Simple warnings::unused Sys::Hostname::FQDN
 
 script:
   - perl -MO=Lint cmilter
