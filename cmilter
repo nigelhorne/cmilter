@@ -24,6 +24,19 @@
 # The latest development version is available
 #	from https://github.com/nigelhorne/cmilter
 
+# Before installing:
+#	modify the blacklist hash table
+#	apt-get install libgeoip-dev
+#	choose your caching algorithm (look for $cache = in this code)
+#	Install CPAN Geo::IP
+#
+# To install, simply put this script into /usr/local/etc/clmilter
+
+# To run add this to /etc/rc.local:
+#	rm -f /var/tmp/cmilter
+#	/usr/local/etc/cmilter local:/var/tmp/cmilter
+#
+# INPUT_MAIL_FILTER(`cmilter', `S=local:/var/tmp/cmilter, F=T, T=S:4m;R:4m')dnl
 # Version 1.0 9/8/12: First release
 # Version 1.1 10/8/12:
 #	Added resilience for connection to IANA
@@ -33,12 +46,15 @@
 #	Prefer the GeoIP database
 # Version 1.3
 #	Use ftok($0) as the key for the shared memory area
+# Version 1.4 27/10/16:
+#	Check FQDN of localhost
 
 # TODO: Use Proc::Daemon to daemonize ourself
 
 use strict;
-use diagnostics;
+# use diagnostics;
 use warnings;
+use autodie qw(:all);
 
 use Sendmail::PMilter qw(:all);
 use Data::Validate::IP;
@@ -49,6 +65,7 @@ use Net::Whois::IANA;
 use Locale::Country;
 use CHI;
 use IPC::SysV;
+use Sys::Hostname::FQDN;
 
 my %blacklist = (
 	'MD' => 1,
@@ -88,7 +105,7 @@ my %cbs;
 $cbs{'connect'} = sub {
 	my ($ctx, $hostname) = @_;
 
-	# print "connection from $hostname\n";
+	# print "$0: connection from $hostname\n";
 
 	my $ip;
 
@@ -100,6 +117,8 @@ $cbs{'connect'} = sub {
 			return SMFIS_REJECT;
 		}
 	} elsif($hostname eq 'localhost') {
+		return SMFIS_ACCEPT;
+	} elsif($hostname eq Sys::Hostname::FQDN::fqdn()) {
 		return SMFIS_ACCEPT;
 	} else {
 		my $query = $resolver->search($hostname);
