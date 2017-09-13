@@ -1,6 +1,15 @@
 #!/usr/bin/env perl
 
-#  Copyright (C) 2012-2015 Nigel Horne <njh@bandsman.co.uk>
+#  Copyright (C) 2012-2017 Nigel Horne <njh@bandsman.co.uk>
+#
+# Usage is subject to licence terms.
+# The licence terms of this software are as follows:
+# Personal single user, single computer use: GPL2
+# All other users (including Commercial, Charity, Educational, Government)
+#	must apply in writing for a licence for use from Nigel Horne at the
+#	above e-mail.
+
+# The personal, single user, single computer, use licence is:
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -66,6 +75,7 @@ use Locale::Country;
 use CHI;
 use IPC::SysV;
 use Sys::Hostname::FQDN;
+use Sys::Syslog qw(:standard :macros);
 
 my %blacklist = (
 	'MD' => 1,
@@ -101,6 +111,8 @@ my $gi = Geo::IP->new(GEOIP_STANDARD);
 # my $cache = CHI->new(driver => 'Memory', datastore => {});
 my $cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
 
+openlog 'cmilter', 'cons,pid', 'user';
+
 my %cbs;
 $cbs{'connect'} = sub {
 	my ($ctx, $hostname) = @_;
@@ -112,7 +124,7 @@ $cbs{'connect'} = sub {
 	if($hostname =~ /\[(.+)]/) {
 		$ip = $1;
 		unless(is_ipv4($ip)) {
-			warn("$ip isn't a valid IPv4 address");
+			syslog(LOG_WARNING, "$ip isn't a valid IPv4 address");
 			$ctx->setreply(554, "5.7.1", "$ip isn't a valid IPv4 address");
 			return SMFIS_REJECT;
 		}
@@ -130,13 +142,13 @@ $cbs{'connect'} = sub {
 				last;
 			}
 		} else {
-			warn("Can't resolve hostname $hostname, " . $resolver->errorstring());
+			syslog(LOG_WARNING, "Can't resolve hostname $hostname, " . $resolver->errorstring());
 			$ctx->setreply(554, "5.7.1", "Can't resolve hostname $hostname");
 			return SMFIS_REJECT;
 		}
 
 		unless($ip) {
-			warn("hostname $hostname, has no A record - rejecting");
+			syslog(LOG_WARNING, "hostname $hostname, has no A record - rejecting");
 			$ctx->setreply(554, "5.7.1", "hostname $hostname, has no A record - rejecting");
 			return SMFIS_REJECT;
 		}
@@ -144,7 +156,7 @@ $cbs{'connect'} = sub {
 		# print "resolved to $ip\n";
 	}
 
-	if(is_private_ipv4($ip) || is_loopback_ipv4($ip)) {
+	if(is_private_ip($ip) || is_loopback_ip($ip)) {
 		return SMFIS_ACCEPT;
 	}
 
@@ -166,7 +178,7 @@ $cbs{'connect'} = sub {
 				$iana->whois_query(-ip => $ip);
 			};
 			if($@) {
-				warn $@;
+				syslog(LOG_WARNING, $@);
 				$country = undef;
 				# Create new object
 				my $iana = Net::Whois::IANA->new();
@@ -186,13 +198,14 @@ $cbs{'connect'} = sub {
 		$country = uc($country);
 		if(exists($blacklist{$country})) {
 			$country = code2country($country);
-			warn("We don't accept emails from $country");
+			syslog(LOG_WARNING, "We don't accept emails from $country");
 			$ctx->setreply(554, "5.7.1", "We don't accept emails from $country");
 			return SMFIS_REJECT;
 		}
-		print "$ip: $country\n";
+		syslog(LOG_INFO, "$ip: $country");
 	} else {
-		warn("Can't determine the country for IP $ip");
+		syslog(LOG_WARNING, "Can't determine the country for IP $ip");
+
 		# Should tempfail with 220 in connect(), however
 		# Sendmail::PMilter forces the argument to be 4xx or 5xx
 		# $ctx->setreply(220, '4.7.1', "Can't determine the country for IP $ip");
