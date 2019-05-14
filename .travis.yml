@@ -21,7 +21,7 @@ perl:
 sudo: false
 
 install:
-  - cpanm --skip-satisfied --quiet --notest Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV B::Lint IPC::System::Simple warnings::unused Sys::Hostname::FQDN Sys::Syslog
+  - cpanm --skip-satisfied Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV B::Lint IPC::System::Simple warnings::unused Sys::Hostname::FQDN Sys::Syslog
 
 script:
   - perl -MO=Lint cmilter
