@@ -73,9 +73,13 @@ use Net::Whois::IP;
 use Net::Whois::IANA;
 use Locale::Country;
 use CHI;
-use IPC::SysV;
 use Sys::Hostname::FQDN;
 use Sys::Syslog qw(:standard :macros);
+
+if($^O ne 'Win32') {
+	require IPC::SysV;
+	IPC::SysV->import();
+}
 
 my %blacklist = (
 	'MD' => 1,
@@ -108,8 +112,12 @@ my $gi = Geo::IP->new(GEOIP_STANDARD);
 	# root_dir => '/tmp',
 	# namespace => $0,
 # );
-# my $cache = CHI->new(driver => 'Memory', datastore => {});
-my $cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
+my $cache;
+if($^O eq 'Win32') {
+	$cache = CHI->new(driver => 'Memory', datastore => {});
+} else {
+	$cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
+}
 
 openlog 'cmilter', 'cons,pid', 'user';
 
