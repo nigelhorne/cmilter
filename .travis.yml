@@ -36,7 +36,7 @@ jobs:
         - cinst -y strawberryperl
         - export "PATH=/c/Strawberry/perl/site/bin:/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"
       install:
-        - cpanm -iqn Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI IPC::SysV B::Lint IPC::System::Simple warnings::unused Sys::Hostname::FQDN Sys::Syslog
+        - cpanm -iqn Sendmail::PMilter Data::Validate::IP Net::DNS Geo::IP Net::Whois::IP Net::Whois::IANA Locale::Country CHI B::Lint IPC::System::Simple warnings::unused Sys::Hostname::FQDN Sys::Syslog
       script:
         - perl -MO=Lint cmilter
         - perl -c -Mwarnings::unused cmilter
