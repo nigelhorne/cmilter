@@ -74,7 +74,7 @@ BEGIN {
 	my @modules = ('Data::Validate::IP', 'Net::DNS', 'Geo::IP', 'Net::Whois::IP',
 		'Net::Whois::IANA', 'Locale::Country', 'CHI', 'Sys::Hostname::FQDN'
 	);
-	if($^O ne 'Win32') {
+	if($^O ne 'MSWin32') {
 		push @modules, 'IPC::SysV';
 	}
 
@@ -155,7 +155,7 @@ my $gi = Geo::IP->new(GEOIP_STANDARD);
 	# namespace => $0,
 # );
 my $cache;
-if($^O eq 'Win32') {
+if($^O eq 'MSWin32') {
 	$cache = CHI->new(driver => 'Memory', datastore => {});
 } else {
 	$cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
