@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-#  Copyright (C) 2012-2017 Nigel Horne <njh@bandsman.co.uk>
+#  Copyright (C) 2012-2020 Nigel Horne <njh@bandsman.co.uk>
 #
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -61,25 +61,67 @@
 # TODO: Use Proc::Daemon to daemonize ourself
 
 use strict;
-# use diagnostics;
 use warnings;
+use IPC::System::Simple;
 use autodie qw(:all);
 
-use Sendmail::PMilter qw(:all);
-use Data::Validate::IP;
-use Net::DNS;
-use Geo::IP;
-use Net::Whois::IP;
-use Net::Whois::IANA;
-use Locale::Country;
-use CHI;
-use Sys::Hostname::FQDN;
-use Sys::Syslog qw(:standard :macros);
+no lib '.';
 
-if($^O ne 'Win32') {
-	require IPC::SysV;
-	IPC::SysV->import();
+my @needfull;
+
+# Install Pre-requisites
+BEGIN {
+	my @modules = ('Data::Validate::IP', 'Net::DNS', 'Geo::IP', 'Net::Whois::IP',
+		'Net::Whois::IANA', 'Locale::Country', 'CHI', 'Sys::Hostname::FQDN'
+	);
+	if($^O ne 'Win32') {
+		push @modules, 'IPC::SysV';
+	}
+
+	foreach my $module(@modules) {
+		eval "use $module";
+		if($@) {
+			push @needfull, $module;
+		}
+	}
+
+	if(scalar(@needfull)) {
+		my $list = join(' ', @needfull);
+		print "Installing $list\n";
+		system("cpan -i $list");
+	}
+	$SIG{__WARN__} = sub {
+		my $warning = shift;
+
+		if($warning =~ /^Use of uninitialized value/) {
+			die $warning;
+		}
+		warn $warning;
+	}
 }
+
+foreach my $module(@needfull) {
+	my $version;
+	if($module =~ /(.+)\s(.+)$/) {
+		$module = $1;
+		$version = $2;
+	}
+	if($module =~ /.+\/(.+)/) {
+		$module = $1;
+	}
+	eval "require $module";
+	if($@) {
+		die $@;
+	}
+	$module->import();
+	# if($version && ($module::VERSION < $version)) {
+		# die "$module: need $version got ", $module::VERSION;
+	# }
+}
+
+# I have no means install modules with qw (yet)
+use Sendmail::PMilter qw(:all);
+use Sys::Syslog qw(:standard :macros);
 
 my %blacklist = (
 	'MD' => 1,
