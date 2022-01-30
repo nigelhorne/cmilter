@@ -1,17 +1,21 @@
 cmilter
 =======
 
-A milter to prevent e-mails from countries from which you don't wish to receive
-e-mails.
+A mail milter to prevent e-mails from countries from which you don't wish to
+receive e-mails.
 
 Before installing:
 
-    modify the blacklist hash table in the source code
-	apt-get install libgeoip-dev
+* modify the blacklist hash table in the source code
+* install dependencies
+
+        apt-get install libgeoip-dev
     or
-	yum install perl-IPC-System-Simple
-    choose your caching algorithm (look for $cache = in the source code)
-    Install Sendmail::PMilter from CPAN, the other needed modules will be installed automatically
+        yum install perl-IPC-System-Simple perl-autodie perl-Data-Validate-IP
+        yum install perl-Geo-IP perl-Net-Whois-IP perl-CHI
+
+* choose your caching algorithm (look for $cache = in the source code)
+* Install Sendmail::PMilter from CPAN, the other needed modules will be installed automatically
 
 To install, simply put this script into /usr/local/etc/cmilter
 
