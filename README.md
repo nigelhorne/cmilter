@@ -7,7 +7,9 @@ e-mails.
 Before installing:
 
     modify the blacklist hash table in the source code
-    apt-get install libgeoip-dev
+	apt-get install libgeoip-dev
+    or
+	yum install perl-IPC-System-Simple
     choose your caching algorithm (look for $cache = in the source code)
     Install Sendmail::PMilter from CPAN, the other needed modules will be installed automatically
 
@@ -19,12 +21,12 @@ If you are using systemd, copy and paste this content into
     [Unit]
     Description=Block e-mail by country
     After=network.target
-    
+
     [Service]
     ExecStart=/usr/local/etc/cmilter local:/var/run/cmilter
     KillMode=process
     Restart=on-failure
-    
+
     [Install]
     WantedBy=multi-user.target
 
