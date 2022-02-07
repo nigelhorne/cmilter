@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-#  Copyright (C) 2012-2020 Nigel Horne <njh@bandsman.co.uk>
+#  Copyright (C) 2012-2022 Nigel Horne <njh@bandsman.co.uk>
 #
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -149,6 +149,11 @@ my $resolver = Net::DNS::Resolver->new();
 my $iana = Net::Whois::IANA->new();
 my $gi = Geo::IP->new(GEOIP_STANDARD);
 
+my %whitelist_hosts = (
+        'oracle1.bandsman.co.uk' => 1,
+        'oracle2.bandsman.co.uk' => 1,
+);
+
 # Choose your caching mechanism depending on your needs
 # my $cache = CHI->new(
 	# driver => 'File',
@@ -183,6 +188,8 @@ $cbs{'connect'} = sub {
 		return SMFIS_ACCEPT;
 	} elsif($hostname eq Sys::Hostname::FQDN::fqdn()) {
 		return SMFIS_ACCEPT;
+	} elsif(exists($whitelist_hosts{$hostname})) {
+                return SMFIS_ACCEPT;
 	} else {
 		my $query = $resolver->search($hostname);
 
