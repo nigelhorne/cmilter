@@ -167,7 +167,7 @@ if($^O eq 'MSWin32') {
 	$cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
 }
 
-openlog 'cmilter', 'cons,pid', 'user';
+openlog 'cmilter', 'cons,pid', LOG_MAIL;
 
 my %cbs;
 $cbs{'connect'} = sub {
