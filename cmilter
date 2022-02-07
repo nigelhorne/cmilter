@@ -247,7 +247,7 @@ $cbs{'connect'} = sub {
 				}
 			}
 		}
-		$cache->set($ip, $country, '1 week');
+		$cache->set($ip, $country, '1 month');
 	} else {
 		# print "$ip: HIT\n";
 	}
