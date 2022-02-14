@@ -142,6 +142,7 @@ my %blacklist = (
 	'RS' => 1,
 	'PK' => 1,
 	'TW' => 1,
+	'VN' => 1,
 );
 
 my $milter = Sendmail::PMilter->new();
