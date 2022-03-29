@@ -220,10 +220,10 @@ $cbs{'connect'} = sub {
 		return SMFIS_ACCEPT;
 	}
 
-	my $country = $gi->country_code_by_addr($ip);
+	my $country = $cache->get($ip);
 
 	unless($country) {
-		$country = $cache->get($ip);
+		$country = $gi->country_code_by_addr($ip);
 	}
 	unless(defined($country)) {
 		# print "$ip: MISS\n";
