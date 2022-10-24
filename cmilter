@@ -125,11 +125,13 @@ use Sendmail::PMilter qw(:all);
 use Sys::Syslog qw(:standard :macros);
 
 my %blacklist = (
+	'IR' => 1,
 	'MD' => 1,
 	'RU' => 1,
 	'CN' => 1,
 	'BG' => 1,
 	'BR' => 1,
+	'LT' => 1,
 	'UY' => 1,
 	'TR' => 1,
 	'MA' => 1,
@@ -144,6 +146,7 @@ my %blacklist = (
 	'PK' => 1,
 	'TW' => 1,
 	'VN' => 1,
+	'ZA' => 1,
 );
 
 my $milter = Sendmail::PMilter->new();
