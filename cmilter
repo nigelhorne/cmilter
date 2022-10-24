@@ -222,7 +222,7 @@ $cbs{'connect'} = sub {
 
 	my $country = $cache->get($ip);
 
-	unless($country) {
+	unless(defined($country)) {
 		$country = $gi->country_code_by_addr($ip);
 	}
 	unless(defined($country)) {
