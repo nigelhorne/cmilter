@@ -156,12 +156,9 @@ my %whitelist_hosts = (
 	# root_dir => '/tmp',
 	# namespace => $0,
 # );
-my $cache;
-if($^O eq 'MSWin32') {
-	$cache = CHI->new(driver => 'Memory', datastore => {});
-} else {
-	$cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
-}
+my $cache = ($^O eq 'MSWin32')
+    ? CHI->new(driver => 'Memory', datastore => {})
+    : CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
 
 # Open syslog for logging
 openlog 'cmilter', 'cons,pid', LOG_MAIL;
@@ -182,11 +179,7 @@ $cbs{'connect'} = sub {
 			$ctx->setreply(554, '5.7.1', "$ip isn't a valid IPv4 address");
 			return SMFIS_REJECT;
 		}
-	} elsif($hostname eq 'localhost') {
-		return SMFIS_ACCEPT;
-	} elsif($hostname eq Sys::Hostname::FQDN::fqdn()) {
-		return SMFIS_ACCEPT;
-	} elsif(exists($whitelist_hosts{$hostname})) {
+	} elsif(($hostname eq 'localhost') || ($hostname eq Sys::Hostname::FQDN::fqdn()) || $whitelist_hosts{$hostname}) {
 		return SMFIS_ACCEPT;
 	} else {
 		# Resolve hostname to IP
@@ -280,6 +273,9 @@ $cbs{'connect'} = sub {
 	return SMFIS_CONTINUE;	# Allow connection if no issues
 };
 
+# Register milter callbacks
 $milter->auto_setconn('cmilter');
 $milter->register('cmilter', \%cbs, SMFI_CURR_ACTS);
+
+# Start milter
 $milter->main();
