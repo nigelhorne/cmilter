@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-#  Copyright (C) 2012-2022 Nigel Horne <njh@bandsman.co.uk>
+#  Copyright (C) 2012-2025 Nigel Horne <njh@bandsman.co.uk>
 #
 # Usage is subject to licence terms.
 # The licence terms of this software are as follows:
@@ -26,7 +26,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 #
-# This program is a milter (i.e. a sendmail filter/plug-in) which blocks
+# This program is a milter (i.e. a sendmail filter/plug-in) that blocks
 # connections from remote sites in countries that we know we won't get e-mails
 # from.
 #
@@ -39,7 +39,7 @@
 #	choose your caching algorithm (look for $cache = in this code)
 #	Install CPAN Geo::IP
 #
-# To install, simply put this script into /usr/local/etc/clmilter
+# To install, put this script into /usr/local/etc/clmilter
 
 # To run add this to /etc/rc.local:
 #	rm -f /var/run/cmilter
@@ -68,17 +68,20 @@ use autodie qw(:all);
 
 no lib '.';
 
-my @needfull;
+my @needfull;	# Tracks required modules to be installed
 
 # Install Pre-requisites
 BEGIN {
 	my @modules = ('Data::Validate::IP', 'Net::DNS', 'Geo::IP', 'Net::Whois::IP',
 		'Net::Whois::IANA', 'Locale::Country', 'CHI', 'Sys::Hostname::FQDN'
 	);
+
+	# Add IPC::SysV if not running on Windows
 	if($^O ne 'MSWin32') {
 		push @modules, 'IPC::SysV';
 	}
 
+	# Attempt to load each module and track missing ones
 	foreach my $module(@modules) {
 		eval "use $module";
 		if($@) {
@@ -86,11 +89,14 @@ BEGIN {
 		}
 	}
 
+	# Attempt to load each module and track missing ones
 	if(scalar(@needfull)) {
 		my $list = join(' ', @needfull);
 		print "Installing $list\n";
 		system("cpan -i $list");
 	}
+
+	# Treat uninitialized value warnings as fatal
 	$SIG{__WARN__} = sub {
 		my $warning = shift;
 
@@ -101,6 +107,7 @@ BEGIN {
 	}
 }
 
+# Retry loading missing modules after installation
 foreach my $module(@needfull) {
 	my $version;
 	if($module =~ /(.+)\s(.+)$/) {
@@ -120,10 +127,12 @@ foreach my $module(@needfull) {
 	# }
 }
 
-# I have no means install modules with qw (yet)
+# Retry loading missing modules after installation
+# I have no means to install modules with qw (yet)
 use Sendmail::PMilter qw(:all);
 use Sys::Syslog qw(:standard :macros);
 
+# Blacklist of country codes (hardcoded for now)
 my %blacklist = (
 	'IR' => 1,
 	'MD' => 1,
@@ -149,16 +158,19 @@ my %blacklist = (
 	'ZA' => 1,
 );
 
+# Initialize milter, DNS resolver, GeoIP, and caching
 my $milter = Sendmail::PMilter->new();
 my $resolver = Net::DNS::Resolver->new();
 my $iana = Net::Whois::IANA->new();
 my $gi = Geo::IP->new(GEOIP_STANDARD);
 
+# Whitelist specific hosts by name
 my %whitelist_hosts = (
-        'oracle1.bandsman.co.uk' => 1,
-        'oracle2.bandsman.co.uk' => 1,
+	'oracle1.bandsman.co.uk' => 1,
+	'oracle2.bandsman.co.uk' => 1,
 );
 
+# Configure caching mechanism based on OS
 # Choose your caching mechanism depending on your needs
 # my $cache = CHI->new(
 	# driver => 'File',
@@ -172,6 +184,7 @@ if($^O eq 'MSWin32') {
 	$cache = CHI->new(driver => 'SharedMem', shmkey => IPC::SysV::ftok($0));
 }
 
+# Open syslog for logging
 openlog 'cmilter', 'cons,pid', LOG_MAIL;
 
 my %cbs;
@@ -180,13 +193,14 @@ $cbs{'connect'} = sub {
 
 	# print "$0: connection from $hostname\n";
 
+	# Extract IP address from hostname if available
 	my $ip;
 
 	if($hostname =~ /\[(.+)]/) {
 		$ip = $1;
 		unless(is_ipv4($ip)) {
 			syslog(LOG_WARNING, "$ip isn't a valid IPv4 address");
-			$ctx->setreply(554, "5.7.1", "$ip isn't a valid IPv4 address");
+			$ctx->setreply(554, '5.7.1', "$ip isn't a valid IPv4 address");
 			return SMFIS_REJECT;
 		}
 	} elsif($hostname eq 'localhost') {
@@ -194,8 +208,9 @@ $cbs{'connect'} = sub {
 	} elsif($hostname eq Sys::Hostname::FQDN::fqdn()) {
 		return SMFIS_ACCEPT;
 	} elsif(exists($whitelist_hosts{$hostname})) {
-                return SMFIS_ACCEPT;
+		return SMFIS_ACCEPT;
 	} else {
+		# Resolve hostname to IP
 		my $query = $resolver->search($hostname);
 
 		if($query) {
@@ -206,28 +221,32 @@ $cbs{'connect'} = sub {
 			}
 		} else {
 			syslog(LOG_WARNING, "Can't resolve hostname $hostname, " . $resolver->errorstring());
-			$ctx->setreply(554, "5.7.1", "Can't resolve hostname $hostname");
+			$ctx->setreply(554, '5.7.1', "Can't resolve hostname $hostname");
 			return SMFIS_REJECT;
 		}
 
 		unless($ip) {
 			syslog(LOG_WARNING, "hostname $hostname, has no A record - rejecting");
-			$ctx->setreply(554, "5.7.1", "hostname $hostname, has no A record - rejecting");
+			$ctx->setreply(554, '5.7.1', "hostname $hostname, has no A record - rejecting");
 			return SMFIS_REJECT;
 		}
 
 		# print "resolved to $ip\n";
 	}
 
+	# Accept private or loopback IPs
 	if(is_private_ip($ip) || is_loopback_ip($ip)) {
 		return SMFIS_ACCEPT;
 	}
 
+	# Retrieve or determine the country for the IP
 	my $country = $cache->get($ip);
 
 	unless(defined($country)) {
 		$country = $gi->country_code_by_addr($ip);
 	}
+
+	# Fallback to Whois lookup if GeoIP fails
 	unless(defined($country)) {
 		# print "$ip: MISS\n";
 		my $whois = Net::Whois::IP::whoisip_query($ip);
@@ -236,6 +255,7 @@ $cbs{'connect'} = sub {
 			$country = $whois->{Country};
 		}
 
+		# Fallback to IANA lookup if still undefined
 		if(!defined($country) || ($country !~ /^[A-Z]{2}$/i)) {
 			eval {
 				$iana->whois_query(-ip => $ip);
@@ -243,7 +263,7 @@ $cbs{'connect'} = sub {
 			if($@) {
 				syslog(LOG_WARNING, $@);
 				$country = undef;
-				# Create new object
+				# Create a new object
 				my $iana = Net::Whois::IANA->new();
 			} else {
 				$country = $iana->country();
@@ -257,12 +277,13 @@ $cbs{'connect'} = sub {
 		# print "$ip: HIT\n";
 	}
 
+	# Block if country is blacklisted
 	if($country) {
 		$country = uc($country);
 		if(exists($blacklist{$country})) {
 			$country = code2country($country);
 			syslog(LOG_WARNING, "We don't accept emails from $country");
-			$ctx->setreply(554, "5.7.1", "We don't accept emails from $country");
+			$ctx->setreply(554, '5.7.1', "We don't accept emails from $country");
 			return SMFIS_REJECT;
 		}
 		syslog(LOG_INFO, "$ip: $country");
@@ -273,11 +294,11 @@ $cbs{'connect'} = sub {
 		# Sendmail::PMilter forces the argument to be 4xx or 5xx
 		# $ctx->setreply(220, '4.7.1', "Can't determine the country for IP $ip");
 		$ctx->setreply(451, '4.7.1', "Can't determine the country for IP $ip");
-		# In the realworld, there is an argument for REJECT here
+		# In the real world, there is an argument for REJECT here
 		return SMFIS_TEMPFAIL;
 	}
 
-	return SMFIS_CONTINUE;
+	return SMFIS_CONTINUE;	# Allow connection if no issues
 };
 
 $milter->auto_setconn('cmilter');

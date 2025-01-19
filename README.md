@@ -3,6 +3,9 @@ cmilter
 
 A mail milter to prevent e-mails from countries from which you don't wish to
 receive e-mails.
+It uses a combination of DNS resolution,
+GeoIP databases,
+and Whois lookups to determine the sender's country and applies a blacklist to block certain countries.
 
 Before installing:
 
