@@ -212,48 +212,49 @@ $cbs{'connect'} = sub {
 	}
 
 	# Retrieve or determine the country for the IP
-	my $country = $cache->get($ip);
+	my $country = $cache->compute($ip, '1 month', sub {
+		# This code block only runs if cache miss
+		# CHI handles locking automatically
+		my $ip = shift;
+		my $country = $gi->country_code_by_addr($ip);
 
-	unless(defined($country)) {
-		$country = $gi->country_code_by_addr($ip);
-	}
+		# Fallback to Whois lookup if GeoIP fails
+		if(!defined($country)) {
+			# print "$ip: MISS\n";
+			my $whois = Net::Whois::IP::whoisip_query($ip);
 
-	# Fallback to Whois lookup if GeoIP fails
-	unless(defined($country)) {
-		# print "$ip: MISS\n";
-		my $whois = Net::Whois::IP::whoisip_query($ip);
+			if(defined($whois) && exists($whois->{Country})) {
+				return $whois->{Country};
+			}
 
-		if(defined($whois) && exists($whois->{Country})) {
-			$country = $whois->{Country};
-		}
-
-		# Fallback to IANA lookup if still undefined
-		if(!defined($country) || ($country !~ /^[A-Z]{2}$/i)) {
-			eval {
-				$iana->whois_query(-ip => $ip);
-			};
-			if($@) {
-				syslog(LOG_WARNING, $@);
-				$country = undef;
-				# Create a new object
-				my $iana = Net::Whois::IANA->new();
-			} else {
-				$country = $iana->country();
-				if($country !~ /^[A-Z]{2}$/i) {
+			# Fallback to IANA lookup if still undefined
+			if(!defined($country) || ($country !~ /^[A-Z]{2}$/i)) {
+				eval {
+					$iana->whois_query(-ip => $ip);
+				};
+				if($@) {
+					syslog(LOG_WARNING, $@);
 					$country = undef;
+					# Create a new object
+					$iana = Net::Whois::IANA->new();
+				} else {
+					$country = $iana->country();
+					if($country !~ /^[A-Z]{2}$/i) {
+						return undef;
+					}
 				}
 			}
+		} else {
+			# print "$ip: HIT\n";
 		}
-		$cache->set($ip, $country, '1 month');
-	} else {
-		# print "$ip: HIT\n";
-	}
+		return $country;
+	});
 
 	# Block if country is blacklisted
 	if($country) {
 		$country = uc($country);
 		if(exists($blacklist{$country})) {
-			$country = code2country($country);
+			$country = Locale::Country::code2country($country);
 			syslog(LOG_WARNING, "We don't accept emails from $country");
 			$ctx->setreply(554, '5.7.1', "We don't accept emails from $country");
 			return SMFIS_REJECT;
