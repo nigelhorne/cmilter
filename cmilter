@@ -215,7 +215,7 @@ $cbs{'connect'} = sub {
 	my $country = $cache->compute($ip, '1 month', sub {
 		# This code block only runs if cache miss
 		# CHI handles locking automatically
-		my $ip = shift;
+		# my $ip = shift;
 		my $country = $gi->country_code_by_addr($ip);
 
 		# Fallback to Whois lookup if GeoIP fails
